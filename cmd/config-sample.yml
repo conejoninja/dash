@@ -1,0 +1,6 @@
+api_proto: http
+api_uri: api_uri
+api_user: some_user
+api_password: random_password
+api_port: 8080
+web_port: 1313
