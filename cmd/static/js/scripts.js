@@ -111,7 +111,17 @@ var color = Chart.helpers.color;
                     document.getElementById("food01-h1-meta-avg").innerHTML = data["food01-h1"]["avg"].toFixed(1);
                 }
             }
-          console.log("META", data);
+        });
+
+    apiRequest("/event/food01")
+        .success(function( data ) {
+            if(data["message"]!=undefined) {
+                document.getElementById("food01-event-msg").innerHTML = data["message"];
+            }if(data["time"]!=undefined) {
+                var dtime = new Date(Date.parse(data["time"]));
+                document.getElementById("food01-event-time").innerHTML = dtime.toString().substr(4,17);
+            }
+            console.log("EVENT", data);
         });
 
 })(jQuery);
