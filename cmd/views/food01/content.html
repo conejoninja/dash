@@ -2,13 +2,13 @@
     <div class="charts">
         <div class="col-md-6 w3layouts-char">
             <div class="charts-grids widget">
-                <h4 class="title">Temperatura</h4>
+                <h4 class="title">Temperature</h4>
                 <canvas id="food01-t1" class="graph"> </canvas>
             </div>
         </div>
         <div class="col-md-6 w3layouts-char">
             <div class="charts-grids widget">
-                <h4 class="title">Humedad</h4>
+                <h4 class="title">Humedity</h4>
                 <canvas id="food01-h1" class="graph"> </canvas>
             </div>
         </div>
@@ -73,19 +73,41 @@
         <div class="clearfix"></div>
     </div>
     <div class="four-grids">
-        <div class="col-sm-12 hover-buttons">
+        <div class="col-sm-6 hover-buttons">
             <div class="wrap">
                 <div class="bg-effect">
                     <h2>Actions</h2>
                     <ul class="bt-list">
-                        <li><a href="#" class="fa-cutlery hvr-icon-fade col-1">Food ON</a></li>
-                        <li><a href="#" class="fa-cutlery hvr-icon-fade col-5">Food OFF</a></li>
-                        <li><a href="#" class="fa-thermometer-half hvr-icon-fade col-7">Fan ON</a></li>
-                        <li><a href="#" class="fa-thermometer-half  hvr-icon-fade col-18">Fan OFF</a></li>
+                        <li style="display: inline-block; width: 32%;"><a href="#" class="fa-cutlery hvr-icon-fade col-1">Order Food</a></li>
+                        <li style="display: inline-block; width: 32%;"><a href="#" class="fa-microchip hvr-icon-fade col-5">Get Memory</a></li>
+
+                        <li style="display: block; width: 90%;">
+                            <select name="food01-mem-id" style="padding: 0px; margin-right: 20px;">
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                            </select>
+                            <input type="text" name="food01-mem-value" style="line-height: normal; margin-right: 20px;" value="">
+                            <a href="#" class="fa-microchip hvr-icon-fade col-7">Set Memory</a>
+                        </li>
+                        <li style="display: block; width: 90%;">
+                            <input type="text" name="food01-ping-value" style="line-height: normal; margin-right: 20px;" value="">
+                            <a href="#" class="fa-wifi hvr-icon-fade col-18">Ping</a>
+                        </li>
                     </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 hover-buttons">
+            <div class="wrap">
+                <div class="bg-effect">
+                    <h2>Events</h2>
+                    <span id="food01-events" style="width: 90%;" ></span>
                 </div>
             </div>
         </div>
         <div class="clearfix"></div>
     </div>
 </div>
+

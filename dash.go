@@ -22,6 +22,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	ctx.Set("api_uri", api_uri)
 	ctx.Set("api_port", api_port)
 	ctx.Set("content", "food01/content.html")
+	ctx.Set("script", "food01/script.js")
 
 	ctx.Set("partial", partial(ctx))
 
