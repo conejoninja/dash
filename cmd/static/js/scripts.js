@@ -33,8 +33,32 @@ var color = Chart.helpers.color;
 function apiRequest(req) {
     return $.getJSON( API_PROTO + "://" + API_URI + ":" + API_PORT + req)
         .fail(function( data ) {
-        console.log( "[API REQUEST FAILED]" , req, data );
-    });
+            console.log( "[API REQUEST FAILED]" , req, data );
+            jsAlert("API request failed", "danger");
+        });
 }
-     
-  
+
+function callRequest(device, f, args) {
+    return $.post( API_PROTO + "://" + API_URI + ":" + API_PORT + "/call/" + device + "/" + f, args)
+        .success(function( data ) {
+            data = JSON.parse(data);
+            jsAlert(data.message, data.type);
+            console.log( "[CALL REQUEST SUCCESS]" , device, f, args, data );
+        })
+        .fail(function( data ) {
+            jsAlert("API request failed", "danger");
+            console.log( "[CALL REQUEST FAILED]" , device, f, args, data );
+        });
+}
+
+function jsAlert(message, type) {
+    if (type == "error") {
+        type = "danger";
+    }
+    if (type != "info" && type != "warning" && type != "danger") {
+        type = "success";
+    }
+    var alertDiv = document.getElementById("js-alert");
+    alertDiv.className = "alert alert-" + type;
+    alertDiv.innerHTML = message;
+}

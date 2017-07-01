@@ -122,5 +122,43 @@
             document.getElementById("food01-events").innerHTML = evtStr;
         });
 
+    
+
 })(jQuery);
+
+
+function food01_orderfood() {
+    callRequest("food01", "food");
+    return false;
+}
+
+function food01_getmemory() {
+    callRequest("food01", "getmem");
+    return false;
+}
+
+function food01_setmemory() {
+    var mid = parseInt(document.getElementById("food01-mem-id").value);
+    var mvalue = parseInt(document.getElementById("food01-mem-value").value);
+    if(mvalue!="") {
+        callRequest("food01", "setmem", {id:mid,value:mvalue});
+    }
+    return false;
+    return false;
+}
+
+function food01_ping() {
+    var pong = document.getElementById("food01-ping-value").value;
+    if(pong!="") {
+        callRequest("food01", "ping", {s:pong});
+    }
+    return false;
+}
+
+
+
+
+
+
+
 
