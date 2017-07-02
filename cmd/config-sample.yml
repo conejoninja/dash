@@ -3,4 +3,11 @@ api_uri: api_uri
 api_user: some_user
 api_password: random_password
 api_port: 8080
+
+web_auth: false
+web_user:
+web_password:
 web_port: 1313
+
+ws_server: ws.server.tld
+ws_port: 8055
