@@ -6,18 +6,21 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/gobuffalo/plush"
-	"github.com/spf13/viper"
 	"html/template"
-	"github.com/julienschmidt/httprouter"
 	"log"
+
+	"github.com/gobuffalo/plush"
+	"github.com/julienschmidt/httprouter"
+	"github.com/spf13/viper"
 )
 
-
 type dashConfig struct {
-	api_proto, api_uri, api_port, api_user, api_password, web_port, web_user, web_password, ws_server, ws_port string
-	web_auth bool
+	api_proto, api_uri, api_port, api_user, api_password string
+	web_port, web_user, web_password, web_proto, web_uri string
+	ws_server, ws_port                                   string
+	web_auth                                             bool
 }
+
 var cfg dashConfig
 
 var tmplCache map[string]string
@@ -27,14 +30,13 @@ const useCache = false
 func handler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	dash := ps.ByName("id")
 	ctx := plush.NewContext()
-	ctx.Set("abspath", "http://localhost:"+cfg.web_port)
+	ctx.Set("abspath", cfg.web_uri)
 	ctx.Set("api_proto", cfg.api_proto)
 	ctx.Set("api_uri", cfg.api_uri)
 	ctx.Set("api_port", cfg.api_port)
-	ctx.Set("content", dash + "/content.html")
-	ctx.Set("script", dash + "/script.js")
+	ctx.Set("content", dash+"/content.html")
+	ctx.Set("script", dash+"/script.js")
 	ctx.Set("title", "Food-01")
-
 
 	ctx.Set("partial", partial(ctx))
 
@@ -49,7 +51,7 @@ func handler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 func handlerDash(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	ctx := plush.NewContext()
-	ctx.Set("abspath", "http://localhost:"+cfg.web_port)
+	ctx.Set("abspath", cfg.web_uri)
 	ctx.Set("content", "dash/content.html")
 	ctx.Set("script", "dash/script.js")
 	ctx.Set("ws_server", cfg.ws_server)
@@ -67,6 +69,54 @@ func handlerDash(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 }
 
+func handlerAjaxGet(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	req := ps.ByName("request")
+	resp, err := http.Get(apiPath() + req)
+	if err != nil {
+		fmt.Println(err)
+	}
+	body, err := ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Fprint(w, string(body))
+}
+
+func handlerAjaxPost(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	device := ps.ByName("device")
+	f := ps.ByName("f")
+
+	/*req.ParseForm()
+	var f common.Method
+	f.Name = function
+	params := make([]common.Value, len(req.Form))
+	p := 0
+	for k, v := range req.Form {
+		if len(v) > 0 {
+			params[p].Id = k
+			params[p].Value = v[0]
+		}
+	}
+	f.Params = params
+	methodStr, _ := json.Marshal(f)*/
+
+	r.ParseForm()
+	resp, err := http.PostForm(apiPath()+"/call/"+device+"/"+f, r.Form)
+	if err != nil {
+		fmt.Println(err)
+	}
+	if resp== nil {
+		fmt.Fprint(w, "{\"type\":\"error\",\"message\":\"Request failed\"}", )
+	}
+	body, err := ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(string(body))
+	fmt.Fprint(w, string(body))
+}
 
 func auth(h httprouter.Handle) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -80,7 +130,6 @@ func auth(h httprouter.Handle) httprouter.Handle {
 		}
 	}
 }
-
 
 func partial(ctx *plush.Context) func(string) (template.HTML, error) {
 	return func(name string) (template.HTML, error) {
@@ -103,16 +152,24 @@ func loadTemplate(name string) string {
 	return string(content)
 }
 
+func apiPath() string {
+	if (cfg.api_proto == "http" && cfg.api_port == "80") || (cfg.api_proto == "https" && cfg.api_port == "443") {
+		return cfg.api_proto + "://" + cfg.api_uri
+	}
+	return cfg.api_proto + "://" + cfg.api_uri + ":" + cfg.api_port
+}
+
 func Start() {
 	tmplCache = make(map[string]string)
 	cfg = readConfig()
 
-
 	router := httprouter.New()
 	router.GET("/dash/:id", auth(handler))
 	router.GET("/", auth(handlerDash))
+	router.GET("/ajax/*request", auth(handlerAjaxGet))
+	router.POST("/ajax/:device/:f", auth(handlerAjaxPost))
 	router.ServeFiles("/static/*filepath", http.Dir("static"))
-	
+
 	fmt.Println("Server Up")
 	log.Fatal(http.ListenAndServe(":"+cfg.web_port, router))
 	fmt.Println("Server Down")
@@ -139,10 +196,11 @@ func readConfig() (cfg dashConfig) {
 	cfg.web_user, wu = os.LookupEnv("WEB_USER")
 	cfg.web_password, wp = os.LookupEnv("WEB_PASSWORD")
 	cfg.web_port = os.Getenv("WEB_PORT")
+	cfg.web_proto = os.Getenv("WEB_PROTO")
+	cfg.web_uri = os.Getenv("WEB_URI")
 
 	cfg.ws_server = os.Getenv("WS_SERVER")
 	cfg.ws_port = os.Getenv("WS_PORT")
-
 
 	if cfg.api_proto == "" {
 		cfg.api_proto = fmt.Sprint(viper.Get("api_proto"))
@@ -166,13 +224,17 @@ func readConfig() (cfg dashConfig) {
 		cfg.api_proto = "http"
 	}
 
-
-
 	if cfg.web_port == "" {
 		cfg.web_port = fmt.Sprint(viper.Get("web_port"))
 	}
 	if web_auth_str == "" {
 		web_auth_str = fmt.Sprint(viper.Get("web_auth"))
+	}
+	if cfg.web_proto == "" {
+		cfg.web_proto = fmt.Sprint(viper.Get("web_proto"))
+	}
+	if cfg.web_uri == "" {
+		cfg.web_uri = fmt.Sprint(viper.Get("web_uri"))
 	}
 	if !wu {
 		cfg.web_user = fmt.Sprint(viper.Get("web_user"))
@@ -183,7 +245,6 @@ func readConfig() (cfg dashConfig) {
 	if cfg.web_port == "" {
 		cfg.web_port = "1313"
 	}
-
 
 	if web_auth_str == "1" || web_auth_str == "true" {
 		cfg.web_auth = true

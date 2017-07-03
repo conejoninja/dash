@@ -31,7 +31,7 @@ var color = Chart.helpers.color;
 
 
 function apiRequest(req) {
-    return $.getJSON( API_PROTO + "://" + API_URI + ":" + API_PORT + req)
+    return $.getJSON( AJAXURI + req)
         .fail(function( data ) {
             console.log( "[API REQUEST FAILED]" , req, data );
             jsAlert("API request failed", "danger");
@@ -39,7 +39,7 @@ function apiRequest(req) {
 }
 
 function callRequest(device, f, args) {
-    return $.post( API_PROTO + "://" + API_URI + ":" + API_PORT + "/call/" + device + "/" + f, args)
+    return $.post( AJAXURI + "/" + device + "/" + f, args)
         .success(function( data ) {
             data = JSON.parse(data);
             jsAlert(data.message, data.type);
