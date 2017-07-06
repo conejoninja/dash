@@ -1,5 +1,22 @@
 <div class="w3-agile-chat">
     <div class="charts">
+        <div class="col-md-12 w3layouts-char">
+            <div class="bs-component mb20 col-md-9">
+            </div>
+            <div class="bs-component mb20 col-md-1">
+                <button type="button" class="btn btn-hover btn-dark btn-block btn-xs" onclick="window.location='<%= url("/dash/food01/day") %>'">Day</button>
+            </div>
+            <div class="bs-component mb20 col-md-1">
+                <button type="button" class="btn btn-hover btn-dark btn-block btn-xs" onclick="window.location='<%= url("/dash/food01/week") %>'">Week</button>
+            </div>
+            <div class="bs-component mb20 col-md-1">
+                <button type="button" class="btn btn-hover btn-dark btn-block btn-xs" onclick="window.location='<%= url("/dash/food01/month") %>'">Month</button>
+            </div>
+        </div>
+        <div class="clearfix"> </div>
+    </div>
+
+    <div class="charts">
         <div class="col-md-6 w3layouts-char">
             <div class="charts-grids widget">
                 <h4 class="title">Temperature</h4>

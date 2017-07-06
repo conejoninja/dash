@@ -29,6 +29,7 @@ const useCache = false
 
 func handler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	dash := ps.ByName("id")
+	period := ps.ByName("period")
 	ctx := plush.NewContext()
 	ctx.Set("abspath", cfg.web_uri)
 	ctx.Set("api_proto", cfg.api_proto)
@@ -37,8 +38,10 @@ func handler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	ctx.Set("content", dash+"/content.html")
 	ctx.Set("script", dash+"/script.js")
 	ctx.Set("title", "Food-01")
+	ctx.Set("period", period)
 
 	ctx.Set("partial", partial(ctx))
+	ctx.Set("url", url(ctx))
 
 	s, err := plush.Render(loadTemplate("main.html"), ctx)
 
@@ -87,20 +90,6 @@ func handlerAjaxPost(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 	device := ps.ByName("device")
 	f := ps.ByName("f")
 
-	/*req.ParseForm()
-	var f common.Method
-	f.Name = function
-	params := make([]common.Value, len(req.Form))
-	p := 0
-	for k, v := range req.Form {
-		if len(v) > 0 {
-			params[p].Id = k
-			params[p].Value = v[0]
-		}
-	}
-	f.Params = params
-	methodStr, _ := json.Marshal(f)*/
-
 	r.ParseForm()
 	resp, err := http.PostForm(apiPath()+"/call/"+device+"/"+f, r.Form)
 	if err != nil {
@@ -136,7 +125,12 @@ func partial(ctx *plush.Context) func(string) (template.HTML, error) {
 		t, err := plush.Render(loadTemplate(name), ctx)
 		return template.HTML(t), err
 	}
+}
 
+func url(ctx *plush.Context) func(string) (template.HTML, error) {
+	return func(str string) (template.HTML, error) {
+		return template.HTML(cfg.web_uri + str), nil
+	}
 }
 
 func loadTemplate(name string) string {
@@ -165,6 +159,7 @@ func Start() {
 
 	router := httprouter.New()
 	router.GET("/dash/:id", auth(handler))
+	router.GET("/dash/:id/:period", auth(handler))
 	router.GET("/", auth(handlerDash))
 	router.GET("/ajax/*request", auth(handlerAjaxGet))
 	router.POST("/ajax/:device/:f", auth(handlerAjaxPost))

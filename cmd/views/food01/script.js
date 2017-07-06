@@ -15,7 +15,7 @@
     }
 
 
-    apiRequest("/sensor/food01-t1;food01-h1")
+    apiRequest("/sensor/food01-t1;food01-h1/<%= period %>")
         .success(function( data ) {
 
             for(var sensor in data) {
@@ -83,7 +83,7 @@
             }
         });
 
-    apiRequest("/meta/food01-t1;food01-h1")
+    apiRequest("/meta/food01-t1;food01-h1/<%= period %>")
         .success(function( data ) {
             if(data["food01-t1"]!=undefined) {
                 if(data["food01-t1"]["max"]!=undefined) {
@@ -143,7 +143,6 @@ function food01_setmemory() {
     if(mvalue!="") {
         callRequest("food01", "setmem", {id:mid,value:mvalue});
     }
-    return false;
     return false;
 }
 
