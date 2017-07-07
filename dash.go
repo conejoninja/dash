@@ -137,7 +137,8 @@ func loadTemplate(name string) string {
 	if content, ok := tmplCache[name]; ok && useCache {
 		return content
 	}
-	content, err := ioutil.ReadFile("views/" + name)
+	content, err := ioutil.ReadFile("./views/" + name)
+	fmt.Println("loading:", "./views/" + name)
 	if err != nil {
 		fmt.Println(err, name)
 		return ""
