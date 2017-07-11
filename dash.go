@@ -8,6 +8,7 @@ import (
 
 	"html/template"
 	"log"
+	"strings"
 
 	"github.com/gobuffalo/plush"
 	"github.com/julienschmidt/httprouter"
@@ -15,10 +16,10 @@ import (
 )
 
 type dashConfig struct {
-	api_proto, api_uri, api_port, api_user, api_password string
-	web_port, web_user, web_password, web_proto, web_uri string
-	ws_server, ws_port                                   string
-	web_auth                                             bool
+	apiProto, apiURI, apiPort, apiUser, apiPassword string
+	webPort, webUser, webPassword, webProto, webURI string
+	wsServer, wsPort                                   string
+	webAuth                                             bool
 }
 
 var cfg dashConfig
@@ -31,10 +32,10 @@ func handler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	dash := ps.ByName("id")
 	period := ps.ByName("period")
 	ctx := plush.NewContext()
-	ctx.Set("abspath", cfg.web_uri)
-	ctx.Set("api_proto", cfg.api_proto)
-	ctx.Set("api_uri", cfg.api_uri)
-	ctx.Set("api_port", cfg.api_port)
+	ctx.Set("abspath", cfg.webURI)
+	ctx.Set("api_proto", cfg.apiProto)
+	ctx.Set("api_uri", cfg.apiURI)
+	ctx.Set("api_port", cfg.apiPort)
 	ctx.Set("content", dash+"/content.html")
 	ctx.Set("script", dash+"/script.js")
 	ctx.Set("title", "Food-01")
@@ -54,11 +55,11 @@ func handler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 func handlerDash(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	ctx := plush.NewContext()
-	ctx.Set("abspath", cfg.web_uri)
+	ctx.Set("abspath", cfg.webURI)
 	ctx.Set("content", "dash/content.html")
 	ctx.Set("script", "dash/script.js")
-	ctx.Set("ws_server", cfg.ws_server)
-	ctx.Set("ws_port", cfg.ws_port)
+	ctx.Set("ws_server", cfg.wsServer)
+	ctx.Set("ws_port", cfg.wsPort)
 	ctx.Set("title", "Dash")
 
 	ctx.Set("partial", partial(ctx))
@@ -111,7 +112,7 @@ func auth(h httprouter.Handle) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 		user, password, hasAuth := r.BasicAuth()
-		if !cfg.web_auth || (hasAuth && user == cfg.web_user && password == cfg.web_password) {
+		if !cfg.webAuth || (hasAuth && user == cfg.webUser && password == cfg.webPassword) {
 			h(w, r, ps)
 		} else {
 			w.Header().Set("WWW-Authenticate", "Basic realm=Restricted")
@@ -129,7 +130,8 @@ func partial(ctx *plush.Context) func(string) (template.HTML, error) {
 
 func url(ctx *plush.Context) func(string) (template.HTML, error) {
 	return func(str string) (template.HTML, error) {
-		return template.HTML(cfg.web_uri + str), nil
+		str = strings.Trim(str, " ")
+		return template.HTML(cfg.webURI + str), nil
 	}
 }
 
@@ -148,10 +150,10 @@ func loadTemplate(name string) string {
 }
 
 func apiPath() string {
-	if (cfg.api_proto == "http" && cfg.api_port == "80") || (cfg.api_proto == "https" && cfg.api_port == "443") {
-		return cfg.api_proto + "://" + cfg.api_uri
+	if (cfg.apiProto == "http" && cfg.apiPort == "80") || (cfg.apiProto == "https" && cfg.apiPort == "443") {
+		return cfg.apiProto + "://" + cfg.apiURI
 	}
-	return cfg.api_proto + "://" + cfg.api_uri + ":" + cfg.api_port
+	return cfg.apiProto + "://" + cfg.apiURI + ":" + cfg.apiPort
 }
 
 func Start() {
@@ -167,7 +169,7 @@ func Start() {
 	router.ServeFiles("/static/*filepath", http.Dir("static"))
 
 	fmt.Println("Server Up")
-	log.Fatal(http.ListenAndServe(":"+cfg.web_port, router))
+	log.Fatal(http.ListenAndServe(":"+cfg.webPort, router))
 	fmt.Println("Server Down")
 
 }
@@ -182,77 +184,77 @@ func readConfig() (cfg dashConfig) {
 	viper.ReadInConfig()
 
 	var au, ap, wu, wp bool
-	cfg.api_user, au = os.LookupEnv("API_USER")
-	cfg.api_password, ap = os.LookupEnv("API_PASSWORD")
-	cfg.api_proto = os.Getenv("API_PROTO")
-	cfg.api_uri = os.Getenv("API_URI")
-	cfg.api_port = os.Getenv("API_PORT")
+	cfg.apiUser, au = os.LookupEnv("API_USER")
+	cfg.apiPassword, ap = os.LookupEnv("API_PASSWORD")
+	cfg.apiProto = os.Getenv("API_PROTO")
+	cfg.apiURI = os.Getenv("API_URI")
+	cfg.apiPort = os.Getenv("API_PORT")
 
-	web_auth_str := os.Getenv("WEB_AUTH")
-	cfg.web_user, wu = os.LookupEnv("WEB_USER")
-	cfg.web_password, wp = os.LookupEnv("WEB_PASSWORD")
-	cfg.web_port = os.Getenv("WEB_PORT")
-	cfg.web_proto = os.Getenv("WEB_PROTO")
-	cfg.web_uri = os.Getenv("WEB_URI")
+	webAuthStr := os.Getenv("WEB_AUTH")
+	cfg.webUser, wu = os.LookupEnv("WEB_USER")
+	cfg.webPassword, wp = os.LookupEnv("WEB_PASSWORD")
+	cfg.webPort = os.Getenv("WEB_PORT")
+	cfg.webProto = os.Getenv("WEB_PROTO")
+	cfg.webURI = os.Getenv("WEB_URI")
 
-	cfg.ws_server = os.Getenv("WS_SERVER")
-	cfg.ws_port = os.Getenv("WS_PORT")
+	cfg.wsServer = os.Getenv("WS_SERVER")
+	cfg.wsPort = os.Getenv("WS_PORT")
 
-	if cfg.api_proto == "" {
-		cfg.api_proto = fmt.Sprint(viper.Get("api_proto"))
+	if cfg.apiProto == "" {
+		cfg.apiProto = fmt.Sprint(viper.Get("api_proto"))
 	}
-	if cfg.api_uri == "" {
-		cfg.api_uri = fmt.Sprint(viper.Get("api_uri"))
+	if cfg.apiURI == "" {
+		cfg.apiURI = fmt.Sprint(viper.Get("api_uri"))
 	}
-	if cfg.api_port == "" {
-		cfg.api_port = fmt.Sprint(viper.Get("api_port"))
+	if cfg.apiPort == "" {
+		cfg.apiPort = fmt.Sprint(viper.Get("api_port"))
 	}
 	if !au {
-		cfg.api_user = fmt.Sprint(viper.Get("api_user"))
+		cfg.apiUser = fmt.Sprint(viper.Get("api_user"))
 	}
 	if !ap {
-		cfg.api_password = fmt.Sprint(viper.Get("api_password"))
+		cfg.apiPassword = fmt.Sprint(viper.Get("api_password"))
 	}
-	if cfg.api_port == "" {
-		cfg.api_port = "8080"
+	if cfg.apiPort == "" {
+		cfg.apiPort = "8080"
 	}
-	if cfg.api_proto == "" {
-		cfg.api_proto = "http"
+	if cfg.apiProto == "" {
+		cfg.apiProto = "http"
 	}
 
-	if cfg.web_port == "" {
-		cfg.web_port = fmt.Sprint(viper.Get("web_port"))
+	if cfg.webPort == "" {
+		cfg.webPort = fmt.Sprint(viper.Get("web_port"))
 	}
-	if web_auth_str == "" {
-		web_auth_str = fmt.Sprint(viper.Get("web_auth"))
+	if webAuthStr == "" {
+		webAuthStr = fmt.Sprint(viper.Get("web_auth"))
 	}
-	if cfg.web_proto == "" {
-		cfg.web_proto = fmt.Sprint(viper.Get("web_proto"))
+	if cfg.webProto == "" {
+		cfg.webProto = fmt.Sprint(viper.Get("web_proto"))
 	}
-	if cfg.web_uri == "" {
-		cfg.web_uri = fmt.Sprint(viper.Get("web_uri"))
+	if cfg.webURI == "" {
+		cfg.webURI = fmt.Sprint(viper.Get("web_uri"))
 	}
 	if !wu {
-		cfg.web_user = fmt.Sprint(viper.Get("web_user"))
+		cfg.webUser = fmt.Sprint(viper.Get("web_user"))
 	}
 	if !wp {
-		cfg.web_password = fmt.Sprint(viper.Get("web_password"))
+		cfg.webPassword = fmt.Sprint(viper.Get("web_password"))
 	}
-	if cfg.web_port == "" {
-		cfg.web_port = "1313"
+	if cfg.webPort == "" {
+		cfg.webPort = "1313"
 	}
 
-	if web_auth_str == "1" || web_auth_str == "true" {
-		cfg.web_auth = true
+	if webAuthStr == "1" || webAuthStr == "true" {
+		cfg.webAuth = true
 	}
-	if cfg.ws_server == "" {
-		cfg.ws_server = fmt.Sprint(viper.Get("ws_server"))
+	if cfg.wsServer == "" {
+		cfg.wsServer = fmt.Sprint(viper.Get("ws_server"))
 	}
-	if cfg.ws_port == "" {
-		cfg.ws_port = fmt.Sprint(viper.Get("ws_port"))
+	if cfg.wsPort == "" {
+		cfg.wsPort = fmt.Sprint(viper.Get("ws_port"))
 	}
-	if cfg.ws_port == "" {
-		cfg.ws_port = "8055"
+	if cfg.wsPort == "" {
+		cfg.wsPort = "8055"
 	}
 
 	return
