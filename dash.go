@@ -95,8 +95,8 @@ func handlerAjaxPost(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 	if err != nil {
 		fmt.Println(err)
 	}
-	if resp== nil {
-		fmt.Fprint(w, "{\"type\":\"error\",\"message\":\"Request failed\"}", )
+	if resp == nil {
+		fmt.Fprint(w, "{\"type\":\"error\",\"message\":\"Request failed\"}")
 	}
 	body, err := ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()
@@ -138,7 +138,7 @@ func loadTemplate(name string) string {
 		return content
 	}
 	content, err := ioutil.ReadFile("./views/" + name)
-	fmt.Println("loading:", "./views/" + name)
+	fmt.Println("loading:", "./views/"+name)
 	if err != nil {
 		fmt.Println(err, name)
 		return ""
